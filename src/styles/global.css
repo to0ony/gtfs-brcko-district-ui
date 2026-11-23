@@ -112,8 +112,6 @@ main > h2 { margin: 2rem 0 0.75rem; }
 .foot { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; font-size: 0.9375rem; color: var(--muted); }
 .foot p + p { margin-top: 0.35rem; }
 .foot a { color: inherit; }
-@media (max-width: 63.99rem) { .wide-only { display: none; } }
-@media (min-width: 64rem) { .narrow-only { display: none; } }
 .foot .src { margin-left: 1rem; white-space: nowrap; }
 
 @media (max-width: 56rem) {
@@ -195,16 +193,15 @@ main > h2 { margin: 2rem 0 0.75rem; }
 .pin { width: 0.8rem; height: 0.8rem; margin-inline: 0.85rem; border: 3px solid var(--ink); border-radius: 50%; flex: none; }
 
 /* početna */
-.home { display: grid; gap: 2rem; }
+.home { display: grid; gap: 2.25rem; }
 .home h2 { margin-bottom: 0.75rem; }
-.home-side { order: -1; }
-.home-side { display: grid; gap: 1.75rem; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.tiles a { display: grid; justify-items: center; gap: 0.5rem; padding: 1.25rem 0.75rem 1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius); font-weight: 600; text-decoration: none; }
+.tiles a:hover { border-color: var(--ink); }
+@media (min-width: 40rem) { .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .my-stops { display: grid; gap: 1.75rem; }
 .my-stops section > .muted { margin-top: 0.5rem; font-size: 0.9375rem; }
-@media (min-width: 56rem) {
-  .home { grid-template-columns: minmax(0, 1fr) 20rem; gap: 3rem; align-items: start; }
-  .home-side { order: 0; }
-}
+@media (min-width: 48rem) { .my-stops { grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); align-items: start; } .my-stops > :only-child { max-width: 24rem; } }
 .line-list { background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; }
 .line-list li + li { border-top: 1px solid var(--rule); }
 .line-list a { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; align-items: center; gap: 0.1rem 0.9rem; min-height: 3.5rem; padding: 0.55rem 1rem; text-decoration: none; }
@@ -413,7 +410,6 @@ a.board-row:hover .board-to { text-decoration: underline; }
 .stop-options li[aria-selected='true'] .muted { color: inherit; }
 .stop-input-none { padding: 0.75rem 0.9rem; }
 .stop-input-err { margin-top: 0.35rem; font-weight: 600; }
-.home-plan { display: grid; gap: 0.7rem; }
 .planner { display: grid; gap: 1.75rem; }
 .plan-form { display: grid; gap: 1rem; max-width: 46rem; }
 .plan-ends { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.7rem; align-items: end; }

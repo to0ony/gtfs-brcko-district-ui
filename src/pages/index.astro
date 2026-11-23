@@ -1,16 +1,16 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import HomePlan from '../components/HomePlan';
-import LineList from '../components/LineList';
+import Icon from '../components/Icon.astro';
 import Mine from '../components/Mine';
 import Search from '../components/Search';
 import { lineRef, network, startRow } from '../lib/network';
 
-const lines = network.lines.map((l) => {
-  const rows = l.dirs.map((d) => startRow(d).t);
-  const t = (rows[0] ?? []).map((_, i) => [...new Set(rows.flatMap((r) => r[i] ?? []))].sort((a, b) => a - b));
-  return { line: lineRef(l), long: l.long, t };
-});
+const tiles = [
+  { href: '/linije', icon: 'bus', title: 'Linije' },
+  { href: '/stanice', icon: 'pin', title: 'Stanice' },
+  { href: '/put', icon: 'route', title: 'Put' },
+  { href: '/karta', icon: 'map', title: 'Karta' },
+] as const;
 const mine = network.lines.map((l) => ({
   line: lineRef(l),
   long: l.long,
@@ -18,19 +18,15 @@ const mine = network.lines.map((l) => ({
 }));
 ---
 
-<Layout section="linije">
+<Layout>
   <div class="wrap hero" slot="hero">
     <h1>Kad ide bus?</h1>
     <Search client:load />
   </div>
   <div class="home">
-    <section class="home-lines">
-      <h2>Linije</h2>
-      <LineList lines={lines} client:load />
-    </section>
-    <aside class="home-side">
-      <section><h2>Kako do tamo?</h2><HomePlan stops={network.stops.map(({ slug, name }) => ({ slug, name }))} client:load /></section>
-      <Mine lines={mine} client:load />
-    </aside>
+    <ul class="tiles">
+      {tiles.map((t) => <li><a href={t.href}><Icon name={t.icon} size={32} />{t.title}</a></li>)}
+    </ul>
+    <Mine lines={mine} client:load />
   </div>
 </Layout>

@@ -8,6 +8,6 @@ const stops = network.stops.map(({ slug, name }) => ({ slug, name }));
 
 <Layout title="Put" description="Planiranje putovanja autobusom u Brčkom, s presjedanjima." section="put">
   <div class="page-head"><h1>Kako do tamo?</h1></div>
-  <noscript><p>Planiranje puta radi samo s uključenim JavaScriptom. Vozni red možeš pogledati po <a href="/">liniji</a> ili <a href="/stanice">stanici</a>.</p></noscript>
+  <noscript><p>Planiranje puta radi samo s uključenim JavaScriptom. Vozni red možeš pogledati po <a href="/linije">liniji</a> ili <a href="/stanice">stanici</a>.</p></noscript>
   <Planner stops={stops} client:load />
 </Layout>

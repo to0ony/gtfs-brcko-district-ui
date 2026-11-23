@@ -1,5 +1,5 @@
 ---
-interface Props { name: 'pin' | 'list' | 'route' | 'print' | 'transfer' | 'back' | 'out'; size?: number }
+interface Props { name: 'pin' | 'list' | 'route' | 'print' | 'transfer' | 'back' | 'out' | 'bus' | 'map'; size?: number }
 const { name, size = 18 } = Astro.props;
 const paths = {
   pin: 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
@@ -8,6 +8,8 @@ const paths = {
   print: 'M7 8V3h10v5M7 17H4V8h16v9h-3M7 14h10v7H7z',
   transfer: 'M3 8h13M12 4l4 4-4 4M21 16H8M12 12l-4 4 4 4',
   out: 'M9 6H5v13h13v-4M13 4h7v7M20 4l-9 9',
+  bus: 'M5 4h14v13H5zM5 11h14M8 17v3M16 17v3M8.500 14h.01M15.500 14h.01',
+  map: 'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14',
   back: 'M4 9h12a4 4 0 0 1 0 8H9M8 5L4 9l4 4',
 };
 ---

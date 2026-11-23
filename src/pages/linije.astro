@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+import LineList from '../components/LineList';
+import { lineRef, network, startRow } from '../lib/network';
+
+const lines = network.lines.map((l) => {
+  const rows = l.dirs.map((d) => startRow(d).t);
+  const t = (rows[0] ?? []).map((_, i) => [...new Set(rows.flatMap((r) => r[i] ?? []))].sort((a, b) => a - b));
+  return { line: lineRef(l), long: l.long, t };
+});
+---
+
+<Layout title="Linije" description="Sve autobusne linije u Brčkom i njihovi sljedeći polasci." section="linije">
+  <div class="page-head"><h1>Linije</h1></div>
+  <LineList lines={lines} client:load />
+</Layout>

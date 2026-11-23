@@ -18,7 +18,7 @@ const {
   section,
 } = Astro.props;
 const nav = [
-  { id: 'linije', href: '/', label: 'Linije' },
+  { id: 'linije', href: '/linije', label: 'Linije' },
   { id: 'stanice', href: '/stanice', label: 'Stanice' },
   { id: 'put', href: '/put', label: 'Put' },
   { id: 'karta', href: '/karta', label: 'Karta' },
@@ -91,7 +91,6 @@ const until = longDate(calendar.end);
         <div class="top-end">
           <nav aria-label="Glavna navigacija">
             {nav.map((n) => <a href={n.href} aria-current={section === n.id ? 'page' : undefined}>{n.label}</a>)}
-            <a class="wide-only" href="/analiza">Analiza</a>
           </nav>
           <div class="lang" translate="no" hidden>
             <span aria-hidden="true"></span>
@@ -133,7 +132,7 @@ const until = longDate(calendar.end);
         <p>
           Prijevoznik: <span translate="no">{network.operator}</span><span class="src">Izvor podataka: <a href={city.sourceUrl}>Vozni red (PDF)</a></span>
         </p>
-        <p class="narrow-only"><a href="/analiza">Analiza prijevoza</a></p>
+        <p><a href="/analiza">Analiza prijevoza</a></p>
       </div>
     </footer>
     <script>

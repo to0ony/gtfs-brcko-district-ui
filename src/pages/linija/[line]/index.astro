@@ -18,7 +18,7 @@ const { line } = Astro.props as { line: Line };
 ---
 
 <Layout title={`Linija ${line.short}: ${line.long}`} description={`Vozni red linije ${line.short}, ${line.long}.`} section="linije">
-  <Crumbs items={[{ label: 'Linije', href: '/' }, { label: `Linija ${line.short}` }]} />
+  <Crumbs items={[{ label: 'Linije', href: '/linije' }, { label: `Linija ${line.short}` }]} />
   <div class="page-head" style={`--c:${line.color}`}>
     <span class="badge-big"><Badge line={line} /></span>
     <h1>{line.long}</h1>

@@ -39,7 +39,7 @@ const others = getStop(stop.slug).lines.filter((s) => s !== line.slug).map(getLi
 ---
 
 <Layout title={`Linija ${line.short}, ${stop.name}`} description={`Polasci linije ${line.short} (${line.long}) sa stanice ${stop.name}.`} section="linije">
-  <Crumbs items={[{ label: 'Linije', href: '/' }, { label: `Linija ${line.short}`, href: `/linija/${line.slug}`, keepDir: true }, { label: stop.name }]} />
+  <Crumbs items={[{ label: 'Linije', href: '/linije' }, { label: `Linija ${line.short}`, href: `/linija/${line.slug}`, keepDir: true }, { label: stop.name }]} />
   <div class="page-head">
     <a class="badge-big" href={`/linija/${line.slug}`} data-keep-dir aria-label={`Linija ${line.short}`}><Badge line={line} /></a>
     <h1>{stop.name}</h1>
