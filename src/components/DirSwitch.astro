@@ -1,0 +1,57 @@
+---
+// Prekidač smjera. Svaki panel u slotu ima data-dir. Bez JS-a su vidljivi svi smjerovi.
+interface Props {
+  dirs: { id: string; label: string }[];
+  /** Smjer koji se otvara ako ga URL (#smjer-1) ne traži. */
+  initial?: string;
+  /** Na širokom ekranu pokaži oba smjera jedan do drugog, bez prekidača. */
+  side?: boolean;
+}
+const { dirs, initial = dirs[0]?.id, side = false } = Astro.props;
+---
+
+<dir-switch class:list={['dir-switch', { side, multi: dirs.length > 1 }]} data-initial={initial}>
+  {dirs.length > 1 && (
+    <div class="dir-tabs" role="group" aria-label="Smjer" hidden>
+      {dirs.map((d) => (
+        <button type="button" data-to={d.id} aria-pressed="false"><span class="dir-word">Smjer </span>{d.label}</button>
+      ))}
+    </div>
+  )}
+  <div class="dir-panels"><slot /></div>
+</dir-switch>
+
+{/* Inline i odmah iza panela, da se drugi smjer ni na trenutak ne pokaže. */}
+<script is:inline>
+  if (!customElements.get('dir-switch')) {
+    customElements.define('dir-switch', class extends HTMLElement {
+      connectedCallback() {
+        const tabs = this.querySelector('.dir-tabs');
+        if (!tabs) return;
+        const buttons = [...tabs.querySelectorAll('button')];
+        const panels = [...this.querySelectorAll('[data-dir]')];
+        const fromUrl = () => {
+          const id = location.hash.replace('#smjer-', '');
+          return buttons.some((b) => b.dataset.to === id) ? id : this.dataset.initial;
+        };
+        const show = (id) => {
+          for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.to === id));
+          for (const p of panels) p.classList.toggle('inactive', p.dataset.dir !== id);
+          // Poveznica natrag na liniju čuva odabrani smjer.
+          for (const a of document.querySelectorAll('a[data-keep-dir]')) a.hash = `smjer-${id}`;
+        };
+        for (const b of buttons) {
+          b.addEventListener('click', () => {
+            history.replaceState(history.state, '', `#smjer-${b.dataset.to}`);
+            show(b.dataset.to);
+            if (this.getBoundingClientRect().top < 0) this.scrollIntoView();
+          });
+        }
+        addEventListener('hashchange', () => show(fromUrl()));
+        tabs.hidden = false;
+        this.classList.add('ready');
+        show(fromUrl());
+      }
+    });
+  }
+</script>

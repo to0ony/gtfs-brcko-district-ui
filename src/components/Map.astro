@@ -1,0 +1,29 @@
+---
+interface Props {
+  src: string;
+  label: string;
+  full?: boolean;
+  /** Karta stanice: numerirana stajališta, klik vodi na karticu stajališta. */
+  poles?: boolean;
+  /** Stalno istaknuta stajališta; klik tada otvara stranicu stanice. */
+  on?: string[];
+}
+const { src, label, full = false, poles = false, on } = Astro.props;
+---
+
+<div class:list={['map', { full, poles }]} data-map data-src={src} data-on={on?.join(' ')} role="region" aria-label={label}>
+  <p class="map-note">Karta se učitava…</p>
+</div>
+
+<script>
+  import { mountMap } from '../lib/map';
+
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      io.unobserve(e.target);
+      mountMap(e.target as HTMLElement);
+    }
+  }, { rootMargin: '200px' });
+  document.querySelectorAll('[data-map]').forEach((el) => io.observe(el));
+</script>

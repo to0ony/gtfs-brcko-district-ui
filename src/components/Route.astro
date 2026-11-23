@@ -1,0 +1,41 @@
+---
+import Icon from './Icon.astro';
+import { getStop, minutesBetween } from '../lib/network';
+import type { Direction, Line } from '../lib/types';
+
+interface Props {
+  line: Line;
+  dir: Direction;
+  minutes: (number | null)[];
+  /** Indeks trenutne stanice, ako smo na stranici stanice. */
+  current?: number;
+}
+const { line, dir, minutes, current = -1 } = Astro.props;
+const hasOptional = dir.stops.some((s) => s.optional);
+const between = minutesBetween(dir);
+const isLast = current === dir.stops.length - 1;
+---
+
+<div class="route-head" aria-hidden="true">
+  {!isLast && <span>{current < 0 ? 'Od polazišta' : 'Odavde'}</span>}
+  <span>Između</span>
+</div>
+<ol class="route" style={`--c:${line.color}`}>
+  {dir.stops.map((s, i) => {
+    const total = i > current && i > 0 ? minutes[i] : null;
+    const step = i > 0 && i !== current ? between[i] : null;
+    return (
+      <li class:list={[{ optional: s.optional, before: i < current, current: i === current }]}>
+        <a class="route-stop" href={`/linija/${line.slug}/stanica/${s.slug}#smjer-${dir.id}`} aria-current={i === current ? 'true' : undefined}>{s.name}</a>
+        {getStop(s.slug).lines.length > 1 && (
+          <a class="route-change" href={`/stanica/${s.slug}`} title="Sve linije na stanici">
+            <Icon name="transfer" size={16} /><span class="sr-only">Sve linije na stanici {s.name}</span>
+          </a>
+        )}
+        <span class="route-min">{total !== null && <>{total} min</>}</span>
+        <span class="route-step">{step !== null && <><span class="sr-only">od prethodne </span>{step}<span class="sr-only"> min</span></>}</span>
+      </li>
+    );
+  })}
+</ol>
+{hasOptional && <p class="route-legend" style={`--c:${line.color}`}><i aria-hidden="true"></i> staju samo neke vožnje</p>}

@@ -1,0 +1,57 @@
+/* Listovi za ispis: /linija/*/pdf i /analiza/pdf. */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: #e4e7ea; color: #000; font: 400 13px/1.25 'Overpass Variable', system-ui, sans-serif; font-variant-numeric: tabular-nums lining-nums; }
+h1, h2, h3, p { margin: 0; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; max-width: 210mm; margin: 0 auto; padding: 0.9rem 1rem; font-size: 16px; }
+.bar a { color: inherit; font-weight: 600; }
+.bar button { min-height: 2.75rem; padding: 0.4rem 1.1rem 0.25rem; border: 0; border-radius: 4px; background: #16191d; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.bar p { color: #454d56; font-size: 15px; }
+.sheet { max-width: 210mm; margin: 0 auto 2rem; padding: 12mm; background: #fff; }
+.head, .day-head { display: flex; justify-content: space-between; align-items: stretch; background: #d4d7da; border-left: 5px solid var(--c); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.head > div, .day-head > div { padding: 8px 10px 5px; }
+h1 { font-size: 24px; font-weight: 800; line-height: 1.1; }
+.head p { font-size: 14px; }
+.no { display: grid; place-content: center; min-width: 62px; padding: 4px 10px 0; background: var(--c); color: var(--t); font-size: 24px; font-weight: 800; }
+.day { margin-top: 12px; }
+.day-head { border-left: 0; border-right: 5px solid var(--c); }
+.day-head .no { background: #eceef0; color: #000; font-size: 18px; }
+h2 { font-size: 16px; font-weight: 800; line-height: 1.15; }
+.day-head p { font-size: 11px; }
+h3 { margin: 10px 0 5px; font-size: 13px; font-weight: 800; }
+.scroll { position: relative; }
+.scroll + .scroll { margin-top: 10px; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9.6px; line-height: 1.12; }
+thead th, thead td { height: 11px; padding: 1px 2px 0 0; background: #000; color: #fff; text-align: right; font-weight: 600; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+thead th:first-child { width: 25%; }
+tbody th { padding: 1px 4px 0 2px; font-weight: 400; text-align: left; overflow-wrap: anywhere; }
+tbody td { padding: 1px 1px 0 0; text-align: right; white-space: nowrap; }
+tbody tr:nth-child(even) > * { background: #ebedef; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+tbody tr:first-child > * { padding-top: 4px; }
+tr.end > * { font-weight: 800; }
+.narrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 14px; align-items: start; }
+.narrow .day-head { grid-column: 1 / -1; }
+.narrow thead th:first-child { width: 46%; }
+.variant { margin-top: 4px; font-size: 11px; }
+footer { margin-top: 14px; font-size: 11px; }
+@media screen and (max-width: 50rem) {
+  .sheet { padding: 12px; }
+  .scroll { overflow-x: auto; }
+  table { min-width: 680px; }
+  .narrow { grid-template-columns: minmax(0, 1fr); }
+  .narrow table { min-width: 0; }
+}
+@page { size: A4 portrait; margin: 12mm 12mm 14mm; @bottom-right { content: counter(page) ' / ' counter(pages); font: 9px sans-serif; } }
+@media print {
+  body { background: #fff; }
+  .bar { display: none; }
+  .sheet { max-width: none; margin: 0; padding: 0; }
+  .day + .day { break-before: page; margin-top: 0; }
+  .scroll, .day-head, h3 { break-inside: avoid; }
+  .day-head, h3 { break-after: avoid; }
+}
+.bar select { min-height: 2.75rem; padding: 0.2rem 0.6rem 0.1rem; border: 1px solid #757e88; border-radius: 4px; background: #fff; color: #000; font: inherit; font-weight: 600; }
+.warning { margin-top: 8px; padding: 6px 10px 4px; border: 2px solid #000; font-weight: 800; }
+td.changed, tbody tr:nth-child(even) > td.changed { background: #fff0b8; print-color-adjust: exact; -webkit-print-color-adjust: exact; }

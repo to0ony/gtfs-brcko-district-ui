@@ -1,0 +1,100 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+import { Badge } from '../../../../components/Badge';
+import Crumbs from '../../../../components/Crumbs.astro';
+import Icon from '../../../../components/Icon.astro';
+import Map from '../../../../components/Map.astro';
+import DirSwitch from '../../../../components/DirSwitch.astro';
+import NextDepartures from '../../../../components/NextDepartures';
+import Route from '../../../../components/Route.astro';
+import Timetable from '../../../../components/Timetable';
+import { directionTimetable, getLine, getStop, longDate, minutesFrom, network, polesOf, servesBothPoles } from '../../../../lib/network';
+import { poleHash, poleName } from '../../../../lib/text';
+import calendar from '../../../../generated/calendar.json';
+import type { Line, StopGroup } from '../../../../lib/types';
+
+export function getStaticPaths() {
+  return network.lines.flatMap((line) =>
+    network.stops
+      .filter((s) => s.lines.includes(line.slug))
+      .map((stop) => ({ params: { line: line.slug, stop: stop.slug }, props: { line, stop } })),
+  );
+}
+const { line, stop } = Astro.props as { line: Line; stop: StopGroup };
+
+const dirs = line.dirs.flatMap((dir) => {
+  const tables = polesOf(dir, stop.slug).flatMap((i) => {
+    const table = directionTimetable(dir, stop.slug, i);
+    return table ? [{ table, pole: stop.poles.length > 1 ? { id: stop.poles[i]!.id, name: poleName(i) } : undefined }] : [];
+  });
+  if (!tables.length) return [];
+  const at = dir.stops.findIndex((s) => s.slug === stop.slug);
+  return [{ dir, tables, at, minutes: minutesFrom(dir, at), both: servesBothPoles(dir, stop.slug) }];
+});
+// Smjer koji ovdje ne staje nema karticu, pa na njega vodi poveznica.
+const elsewhere = line.dirs.filter((d) => !dirs.some((x) => x.dir.id === d.id));
+// Na okretištu prvo otvori smjer u kojem se odavde može otići.
+const initial = (dirs.find((d) => d.tables.some((t) => t.table.kind === 'polasci')) ?? dirs[0])?.dir.id;
+const others = getStop(stop.slug).lines.filter((s) => s !== line.slug).map(getLine);
+---
+
+<Layout title={`Linija ${line.short}, ${stop.name}`} description={`Polasci linije ${line.short} (${line.long}) sa stanice ${stop.name}.`} section="linije">
+  <Crumbs items={[{ label: 'Linije', href: '/' }, { label: `Linija ${line.short}`, href: `/linija/${line.slug}`, keepDir: true }, { label: stop.name }]} />
+  <div class="page-head">
+    <a class="badge-big" href={`/linija/${line.slug}`} data-keep-dir aria-label={`Linija ${line.short}`}><Badge line={line} /></a>
+    <h1>{stop.name}</h1>
+  </div>
+  <div class="tools">
+    <a class="button" href={`/stanica/${stop.slug}`}><Icon name="list" />Svi polasci</a>
+    <a class="button" href={`/karta?stanica=${stop.slug}`}><Icon name="pin" />Na karti</a>
+    <a class="button" href={`/put?od=${stop.slug}`}><Icon name="route" />Put odavde</a>
+    <button class="button" type="button" data-print hidden><Icon name="print" />Ispis</button>
+  </div>
+
+  <DirSwitch dirs={dirs.map((d) => d.dir)} initial={initial}>
+  {dirs.map(({ dir, tables, at, minutes, both }) => (
+    <section class="dir" data-dir={dir.id}>
+      <div class="dir-main">
+        <h2 class="dir-title"><span class="muted">Smjer</span> {dir.label}</h2>
+        {both && <p class="pole-note">Autobus ovdje staje na oba stajališta, pa se iste vožnje vide dvaput.</p>}
+        {tables.map(({ table, pole }) => (
+          <div class="pole-block">
+            {pole && <h3><a href={`/stanica/${stop.slug}${poleHash(pole.id)}`}>{pole.name}</a></h3>}
+            {table.kind === 'polasci'
+              ? <NextDepartures t={table.days.map((d) => d.map((x) => x.m))} client:load />
+              : <p class="next-start">Zadnja stanica u ovom smjeru. Ovo su dolasci.</p>}
+            <Timetable table={table} client:load />
+          </div>
+        ))}
+        <p class="valid">Vrijedi od {longDate(calendar.start)} do {longDate(calendar.end)} Prijevoznik: <span translate="no">{network.operator}</span></p>
+        {elsewhere.map((d) => (
+          <a class="button" href={`/linija/${line.slug}#smjer-${d.id}`}><Icon name="back" />Suprotni smjer: {d.label}</a>
+        ))}
+      </div>
+      <div class="dir-map">
+        <h2>Gdje staje</h2>
+        <Map src={`/data/stanica-geo/${stop.slug}.json`} label={`Karta stanice ${stop.name}, smjer ${dir.label}`} poles on={tables.flatMap((t) => t.pole?.id ?? [])} />
+      </div>
+      <div class="dir-route">
+        <Route line={line} dir={dir} minutes={minutes} current={at} />
+      </div>
+    </section>
+  ))}
+  </DirSwitch>
+
+  {others.length > 0 && (
+    <section class="others">
+      <h2>Ostale linije na stanici</h2>
+      <p class="badges">
+        {others.map((l) => <a href={`/linija/${l.slug}/stanica/${stop.slug}`} aria-label={`Linija ${l.short}`}><Badge line={l} /></a>)}
+      </p>
+    </section>
+  )}
+</Layout>
+
+<script>
+  for (const b of document.querySelectorAll<HTMLButtonElement>('[data-print]')) {
+    b.hidden = false;
+    b.addEventListener('click', () => print());
+  }
+</script>

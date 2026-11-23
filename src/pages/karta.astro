@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Badge } from '../components/Badge';
+import Map from '../components/Map.astro';
+import { network } from '../lib/network';
+---
+
+<Layout title="Karta" section="karta">
+  <h1 class="sr-only">Karta linija i stanica</h1>
+  <div class="map-filter" role="group" aria-label="Prikaži samo liniju">
+    {network.lines.map((l) => (
+      <button type="button" data-line={l.slug} aria-pressed="false" title={l.long}><Badge line={l} /></button>
+    ))}
+  </div>
+  <Map src="/data/mreza.json" label="Karta svih linija i stanica" full />
+</Layout>

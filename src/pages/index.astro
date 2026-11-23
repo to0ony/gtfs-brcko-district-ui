@@ -1,0 +1,36 @@
+---
+import Layout from '../layouts/Layout.astro';
+import HomePlan from '../components/HomePlan';
+import LineList from '../components/LineList';
+import Mine from '../components/Mine';
+import Search from '../components/Search';
+import { lineRef, network, startRow } from '../lib/network';
+
+const lines = network.lines.map((l) => {
+  const rows = l.dirs.map((d) => startRow(d).t);
+  const t = (rows[0] ?? []).map((_, i) => [...new Set(rows.flatMap((r) => r[i] ?? []))].sort((a, b) => a - b));
+  return { line: lineRef(l), long: l.long, t };
+});
+const mine = network.lines.map((l) => ({
+  line: lineRef(l),
+  long: l.long,
+  dirs: l.dirs.map((d) => ({ id: d.id, to: d.label, t: startRow(d).t })),
+}));
+---
+
+<Layout section="linije">
+  <div class="wrap hero" slot="hero">
+    <h1>Kad ide bus?</h1>
+    <Search client:load />
+  </div>
+  <div class="home">
+    <section class="home-lines">
+      <h2>Linije</h2>
+      <LineList lines={lines} client:load />
+    </section>
+    <aside class="home-side">
+      <section><h2>Kako do tamo?</h2><HomePlan stops={network.stops.map(({ slug, name }) => ({ slug, name }))} client:load /></section>
+      <Mine lines={mine} client:load />
+    </aside>
+  </div>
+</Layout>

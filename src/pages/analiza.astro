@@ -1,0 +1,65 @@
+---
+// Zasebna cjelina: vlastiti izgled i skripte, ništa od ovoga se ne učitava na ostalim stranicama.
+import Layout from '../analiza/Layout.astro';
+import Analiza from '../analiza/Analiza';
+import { analysis as a } from '../analiza/data';
+import { dec, int } from '../analiza/format';
+import { MAX_ACCESS_WALK } from '../analiza/reach';
+import { RULES } from '../lib/planner';
+import { longDate } from '../lib/network';
+import calendar from '../generated/calendar.json';
+
+const people = a.settlements.reduce((n, s) => n + s.pop, 0);
+const before = a.settlements.reduce((n, s) => n + s.pop91, 0);
+const served = a.settlements.filter((s) => s.stops.length);
+const tiles = [
+  { label: 'Stanovnika', value: int(people), note: `popis 2013. (1991: ${int(before)})` },
+  { label: 'Naselja sa stanicom', value: `${served.length} od ${a.settlements.length}`, note: `${Math.round((100 * served.reduce((n, s) => n + s.pop, 0)) / people)} % stanovnika` },
+  { label: 'Vožnji radnim danom', value: int(a.trips[0]!), note: a.trips[1] !== undefined ? `vikendom ${int(a.trips[1])}` : '' },
+  { label: 'Kilometara radnim danom', value: int(a.vkm[0]!), note: `${dec((1000 * a.vkm[0]!) / people, 0)} na 1000 stanovnika` },
+];
+const toc: [string, string][] = [['#pregled', 'Pregled'], ['#naselja', 'Naselja'], ['#vrijeme', 'Vrijeme'], ['#vikend', 'Vikend i praznici'], ['#doseg', 'Doseg'], ['#linije', 'Linije'], ['#metoda', 'Metoda']];
+---
+
+<Layout
+  title="Analiza prijevoza"
+  description="Koliko autobusa vozi, kamo se njima stiže i koliko ljudi ih ima uz stanicu. Mjeri se ponuda iz reda polazaka, a ne koliko se ljudi stvarno vozi."
+  back={{ href: '/', label: 'Vozni red' }}
+  toc={toc}
+>
+  <section id="pregled" class="wrap">
+    <h2>Pregled</h2>
+    <div class="tiles">
+      {tiles.map((t) => <div class="tile"><span class="tile-label">{t.label}</span><strong>{t.value}</strong><span class="tile-note">{t.note}</span></div>)}
+    </div>
+    <ul class="findings">
+      {a.findings.map((f) => <li>{f}</li>)}
+    </ul>
+  </section>
+  <Analiza client:only="preact">
+    <p slot="fallback" class="wrap muted loading">Učitavam…</p>
+  </Analiza>
+  <noscript><p class="wrap">Karta, grafovi i popisi rade samo s uključenim JavaScriptom.</p></noscript>
+  <section id="metoda" class="wrap">
+    <h2>Metoda</h2>
+    <div class="method">
+      <div>
+        <h3>Odakle su podaci</h3>
+        <p>Polasci su iz istih podataka kao i vozni red, koji vrijedi od {longDate(calendar.start)} do {longDate(calendar.end)} Stanovnici i dob su konačni rezultati popisa 2013. i popisa 1991. po naseljima, sa <a href="http://www.statistika.ba/?show=12&id=39800">statistika.ba</a>.</p>
+        <p>Granice naselja su s iste stranice, poravnate na granicu Distrikta iz <a href="https://www.openstreetmap.org/copyright">OpenStreetMapa</a>. Sredine naselja su iz OpenStreetMapa. Rub odstupa tipično oko 25 m.</p>
+      </div>
+      <div>
+        <h3>Kako se računa</h3>
+        <p>Vožnja se broji u naselju ako se u njemu može ući u autobus, jednom po vožnji, u oba smjera. Pauza je najduže vrijeme između dva polaska, bez obzira na smjer.</p>
+        <p>Put uključuje čekanje i presjedanje: najmanje {RULES.change} min za presjedanje i najviše {RULES.maxWalk} m hoda između stanica. Iz naselja bez stanice računa se hod od sredine naselja, najviše {MAX_ACCESS_WALK} min.</p>
+        <p>Najbrže do Centra i Bolnice je najkraće putovanje u danu. Povratak je posljednji polazak kojim se isti dan još stiže kući.</p>
+      </div>
+      <div>
+        <h3>Što se ne može zaključiti</h3>
+        <p>Ne zna se koliko se ljudi vozi, kasne li autobusi i koliko to košta. Popis je iz 2013, pa danas u mnogim naseljima vjerojatno živi manje ljudi.</p>
+        <p>Ne zna se gdje unutar naselja ljudi žive: naselje sa stanicom može imati i kuće daleko od nje. Za naselje bez stanice ona može biti odmah preko granice.</p>
+        <p>Broj vožnji na 1000 stanovnika ide u korist malih naselja kroz koja se samo prolazi. Brzina je iz voznog reda i ovisi o tome kako je napisan.</p>
+      </div>
+    </div>
+  </section>
+</Layout>

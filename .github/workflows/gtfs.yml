@@ -1,0 +1,17 @@
+# Jednom dnevno zatraži novi build na Vercelu (build skida najnoviji feed).
+# Ne radi ništa dok se u repo ne doda secret VERCEL_DEPLOY_HOOK.
+name: Osvježi vozni red
+on:
+  schedule:
+    - cron: '20 3 * * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "VERCEL_DEPLOY_HOOK nije postavljen"; exit 0; fi
+          curl -fsS -X POST "$HOOK" > /dev/null

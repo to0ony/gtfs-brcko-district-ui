@@ -1,0 +1,40 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Crumbs from '../../../components/Crumbs.astro';
+import { Badge } from '../../../components/Badge';
+import DirSwitch from '../../../components/DirSwitch.astro';
+import Icon from '../../../components/Icon.astro';
+import Map from '../../../components/Map.astro';
+import NextStart from '../../../components/NextStart';
+import Star from '../../../components/Star';
+import Route from '../../../components/Route.astro';
+import { minutesFrom, network, startRow } from '../../../lib/network';
+import type { Line } from '../../../lib/types';
+
+export function getStaticPaths() {
+  return network.lines.map((line) => ({ params: { line: line.slug }, props: { line } }));
+}
+const { line } = Astro.props as { line: Line };
+---
+
+<Layout title={`Linija ${line.short}: ${line.long}`} description={`Vozni red linije ${line.short}, ${line.long}.`} section="linije">
+  <Crumbs items={[{ label: 'Linije', href: '/' }, { label: `Linija ${line.short}` }]} />
+  <div class="page-head" style={`--c:${line.color}`}>
+    <span class="badge-big"><Badge line={line} /></span>
+    <h1>{line.long}</h1>
+    <div class="actions"><a class="button" href={`/linija/${line.slug}/pdf`}><Icon name="print" /><span translate="no">PDF</span><span class="sr-only">: vozni red linije {line.short}</span></a><Star kind="linija" id={line.slug} name={line.short} client:load /></div>
+  </div>
+
+  <DirSwitch dirs={line.dirs} side>
+    {line.dirs.map((dir) => (
+      <section data-dir={dir.id}>
+        <h2 class="dir-title"><span class="muted">Smjer</span> {dir.label}</h2>
+        <NextStart t={startRow(dir).t} prefix="Kreće u" client:load />
+        <Route line={line} dir={dir} minutes={minutesFrom(dir, 0)} />
+      </section>
+    ))}
+  </DirSwitch>
+
+  <h2>Trasa</h2>
+  <Map src={`/data/linija/${line.slug}.json`} label={`Karta linije ${line.short}`} />
+</Layout>

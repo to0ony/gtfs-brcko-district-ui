@@ -1,0 +1,58 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Crumbs from '../../components/Crumbs.astro';
+import Icon from '../../components/Icon.astro';
+import BusSign from '../../components/BusSign.astro';
+import Board from '../../components/Board';
+import DirLinks from '../../components/DirLinks';
+import Map from '../../components/Map.astro';
+import Star from '../../components/Star';
+import { boardRows, directionTimetable, getLine, lineRef, network, toCyrillic } from '../../lib/network';
+import { mapsUrl, poleName } from '../../lib/text';
+import type { StopGroup } from '../../lib/types';
+
+export function getStaticPaths() {
+  return network.stops.map((stop) => ({ params: { stop: stop.slug }, props: { stop } }));
+}
+const { stop } = Astro.props as { stop: StopGroup };
+const rows = boardRows(stop.slug);
+const many = stop.poles.length > 1;
+const boards = stop.poles.map((p, i) => ({ id: many ? p.id : undefined, title: many ? poleName(i) : undefined, maps: many ? mapsUrl(p) : undefined, rows: rows.filter((r) => r.pole === i) }));
+const links = stop.lines
+  .map(getLine)
+  .map((line) => ({
+    line: lineRef(line),
+    dirs: line.dirs
+      .filter((dir) => directionTimetable(dir, stop.slug)?.kind === 'polasci')
+      .map((dir) => ({ id: dir.id, label: dir.label })),
+  }))
+  .filter((l) => l.dirs.length);
+---
+
+<Layout title={stop.name} description={`Sljedeći polasci autobusa sa stanice ${stop.name}.`} section="stanice">
+  <Crumbs items={[{ label: 'Stanice', href: '/stanice' }, { label: stop.name }]} />
+  <div class="page-head stop-head">
+    <BusSign size="head" />
+    <div>
+      <h1>{stop.name}</h1>
+      {/* Drugo pismo, kao na tabli; koje se vidi, ovisi o odabranom jeziku (global.css). */}
+      <p class="other-script" translate="no"><span lang="bs-Cyrl">{toCyrillic(stop.name)}</span><span lang="hr">{stop.name}</span></p>
+    </div>
+  </div>
+  <div class="tools">
+    <Star kind="stanica" id={stop.slug} name={stop.name} client:load />
+    <a class="button" href={`/put?od=${stop.slug}`}><Icon name="route" />Put odavde</a>
+    <a class="button" href={`/karta?stanica=${stop.slug}`}><Icon name="pin" />Na karti</a>
+    {!many && <a class="button" href={mapsUrl(stop.poles[0]!)} target="_blank" rel="noopener"><Icon name="out" /><span translate="no">Google Maps</span></a>}
+  </div>
+
+  <Map src={`/data/stanica-geo/${stop.slug}.json`} label={`Karta stanice ${stop.name}`} poles />
+
+  <div class:list={['boards', { many }]}>
+    {boards.map(({ id, title, maps, rows }) => <Board stop={stop.slug} name={stop.name} rows={rows} pole={id} title={title} maps={maps} limit={many ? 5 : 8} client:load />)}
+    <section class="stop-lines">
+      <h2>Cijeli vozni red</h2>
+      <DirLinks stop={stop.slug} links={links} />
+    </section>
+  </div>
+</Layout>

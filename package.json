@@ -1,0 +1,33 @@
+{
+  "name": "javni-prijevoz-gtfs",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "gtfs:fetch": "node scripts/fetch.ts",
+    "gtfs:build": "node scripts/gtfs.ts",
+    "dev": "npm run gtfs:build && astro dev",
+    "build": "npm run gtfs:build && astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "test": "node --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@astrojs/preact": "^6.1.6",
+    "@fontsource-variable/overpass": "^5.3.0",
+    "astro": "^7.4.13",
+    "fflate": "^0.8.3",
+    "maplibre-gl": "^6.19.0",
+    "papaparse": "^5.7.1",
+    "preact": "^11.2.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^26.6.6",
+    "@types/papaparse": "^5.5.2",
+    "typescript": "^6.0.3"
+  }
+}

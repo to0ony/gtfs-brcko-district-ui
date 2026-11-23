@@ -1,0 +1,94 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Badge } from '../components/Badge';
+import { getLine, network } from '../lib/network';
+import { fold, plural } from '../lib/text';
+
+const groups: { letter: string; stops: typeof network.stops }[] = [];
+for (const s of network.stops) {
+  const first = s.name[0]!.toUpperCase();
+  const letter = /\d/.test(first) ? '0–9' : first;
+  const g = groups.find((x) => x.letter === letter);
+  if (g) g.stops.push(s);
+  else groups.push({ letter, stops: [s] });
+}
+---
+
+<Layout title="Stanice" section="stanice">
+  <div class="page-head"><h1>Stanice</h1><p class="muted">{plural(network.stops.length, 'stanica', 'stanice', 'stanica')}</p></div>
+  <div class="filter">
+    <label for="filter">Filtriraj</label>
+    <input id="filter" type="search" autocomplete="off" placeholder="npr. bolnica" />
+  </div>
+  <p id="none" class="muted" hidden>Nijedna stanica ne odgovara.</p>
+  {groups.map((g) => (
+    <section class="letter" data-group>
+      <h2 translate="no">{g.letter}</h2>
+      <ul>
+        {g.stops.map((s) => (
+          <li data-name={fold(s.name)} data-title={s.name}>
+            <a href={`/stanica/${s.slug}`}>{s.name}</a>
+            <span class="badges">
+              {s.lines.slice(0, 5).map((l) => <Badge line={getLine(l)} />)}
+              {s.lines.length > 5 && <span class="muted">+{s.lines.length - 5}</span>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</Layout>
+
+<script>
+  import { fold } from '../lib/text';
+
+  // Azbuka ima drugi redoslijed, pa se popis u ćirilici slaže ispočetka.
+  const all = [...document.querySelectorAll<HTMLElement>('[data-group]')];
+  const latin = all.map((g) => ({ g, letter: g.querySelector('h2')!.textContent!, items: [...g.querySelectorAll<HTMLElement>('[data-name]')] }));
+  const list = document.createElement('div');
+  all[0]!.before(list);
+  const arrange = () => {
+    let groups = latin;
+    if (jezik.cyrillic) {
+      const items = latin.flatMap((x) => x.items).map((li) => ({ li, name: jezik.toCyrillic(li.dataset.title!) }));
+      items.sort((a, b) => a.name.localeCompare(b.name, 'sr-Cyrl', { numeric: true }));
+      const byLetter = new Map<string, HTMLElement[]>();
+      for (const { li, name } of items) {
+        const letter = /\d/.test(name[0]!) ? '0–9' : name[0]!.toUpperCase();
+        byLetter.set(letter, [...(byLetter.get(letter) ?? []), li]);
+      }
+      groups = [...byLetter].map(([letter, its]) => {
+        const g = document.createElement('section');
+        g.className = 'letter';
+        g.dataset.group = '';
+        const h2 = document.createElement('h2');
+        h2.textContent = letter;
+        g.append(h2, document.createElement('ul'));
+        return { g, letter, items: its };
+      });
+    }
+    for (const { g, items } of groups) g.querySelector('ul')!.replaceChildren(...items);
+    list.replaceChildren(...groups.map((x) => x.g));
+  };
+  arrange();
+  addEventListener('jezikchange', () => { arrange(); run(); });
+
+  const input = document.querySelector<HTMLInputElement>('#filter')!;
+  const none = document.querySelector<HTMLElement>('#none')!;
+  const run = () => {
+    const q = fold(input.value.trim());
+    let any = false;
+    for (const g of document.querySelectorAll<HTMLElement>('[data-group]')) {
+      let shown = false;
+      for (const li of g.querySelectorAll<HTMLElement>('[data-name]')) {
+        li.hidden = !li.dataset.name!.includes(q);
+        if (!li.hidden) shown = true;
+      }
+      g.hidden = !shown;
+      if (shown) any = true;
+    }
+    none.hidden = any;
+  };
+  input.addEventListener('input', run);
+  run();
+</script>

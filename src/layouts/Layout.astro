@@ -1,0 +1,147 @@
+---
+import '@fontsource-variable/overpass';
+import '../styles/global.css';
+import { city } from '../../city.config';
+import BusSign from '../components/BusSign.astro';
+import { longDate, network } from '../lib/network';
+import jezik from '../scripts/jezik.js?raw';
+import calendar from '../generated/calendar.json';
+
+interface Props {
+  title?: string;
+  description?: string;
+  section?: 'linije' | 'stanice' | 'put' | 'karta';
+}
+const {
+  title,
+  description = `Vozni red autobusa u Brčkom: linije, stanice i sljedeći polasci.`,
+  section,
+} = Astro.props;
+const nav = [
+  { id: 'linije', href: '/', label: 'Linije' },
+  { id: 'stanice', href: '/stanice', label: 'Stanice' },
+  { id: 'put', href: '/put', label: 'Put' },
+  { id: 'karta', href: '/karta', label: 'Karta' },
+];
+const until = longDate(calendar.end);
+---
+
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title ? `${title} – ${city.siteName}` : `${city.siteName} – vozni red autobusa`}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b1e22" />
+    {/* Prije prvog iscrtavanja, da stranica ne bljesne krivom temom. */}
+    <script is:inline>
+      (() => {
+        const root = document.documentElement;
+        const system = matchMedia('(prefers-color-scheme: dark)');
+        const read = () => {
+          try {
+            const v = localStorage.getItem('tema');
+            return v === 'light' || v === 'dark' ? v : 'system';
+          } catch {
+            return root.dataset.pref || 'system';
+          }
+        };
+        const apply = (pref) => {
+          const theme = pref === 'system' ? (system.matches ? 'dark' : 'light') : pref;
+          const changed = root.dataset.theme !== theme;
+          root.dataset.pref = pref;
+          root.dataset.theme = theme;
+          for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.content = theme === 'dark' ? '#1b1e22' : '#ffffff';
+          const box = document.querySelector('.theme');
+          if (box) {
+            box.hidden = false;
+            box.dataset.pref = pref;
+            box.querySelector('select').value = pref;
+          }
+          if (changed) dispatchEvent(new Event('themechange'));
+        };
+        apply(read());
+        system.addEventListener('change', () => apply(root.dataset.pref));
+        addEventListener('storage', (e) => { if (e.key === 'tema' || e.key === null) apply(read()); });
+        addEventListener('pageshow', (e) => { if (e.persisted) apply(read()); });
+        window.setTheme = (pref) => {
+          if (pref) {
+            try {
+              if (pref === 'system') localStorage.removeItem('tema');
+              else localStorage.setItem('tema', pref);
+            } catch { /* privatni način: vrijedi samo za ovu stranicu */ }
+          }
+          apply(pref || root.dataset.pref);
+        };
+      })();
+    </script>
+    <script is:inline set:html={jezik}></script>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip" href="#sadrzaj">Preskoči na sadržaj</a>
+    <header class="top">
+      <div class="wrap top-row">
+        <a class="brand" href="/">
+          <BusSign size="logo" />
+          <span class="brand-name">{city.siteName}</span>
+        </a>
+        <div class="top-end">
+          <nav aria-label="Glavna navigacija">
+            {nav.map((n) => <a href={n.href} aria-current={section === n.id ? 'page' : undefined}>{n.label}</a>)}
+            <a class="wide-only" href="/analiza">Analiza</a>
+          </nav>
+          <div class="lang" translate="no" hidden>
+            <span aria-hidden="true"></span>
+            <select aria-label="Jezik">
+              <option value="bs" lang="bs">Bosanski</option>
+              <option value="hr" lang="hr">Hrvatski</option>
+              <option value="sr" lang="sr-Latn">Srpski (latinica)</option>
+              <option value="sr-cyrl" lang="bs-Cyrl">Српски (ћирилица)</option>
+            </select>
+          </div>
+          <script is:inline>jezik.ready();</script>
+          <div class="theme" data-pref="system" hidden>
+            <svg class="i-system" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" /></svg>
+            <svg class="i-light" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" /></svg>
+            <svg class="i-dark" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" /></svg>
+            <select aria-label="Tema">
+              <option value="system">Sustav</option>
+              <option value="light">Svijetla</option>
+              <option value="dark">Tamna</option>
+            </select>
+          </div>
+          <script is:inline>
+            setTheme();
+            document.querySelector('.theme select').addEventListener('change', (e) => setTheme(e.target.value));
+          </script>
+        </div>
+      </div>
+      <slot name="hero" />
+    </header>
+    <p class="expired" data-until={calendar.end} hidden>
+      Ovaj vozni red vrijedio je do {until} Polasci su okvirni dok ne stigne novi.
+    </p>
+    <main id="sadrzaj" class="wrap"><slot /></main>
+    <footer class="foot">
+      <div class="wrap">
+        <p>
+          Neslužbena stranica. Svi polasci su po voznom redu, bez kašnjenja uživo. Vrijedi do {until}
+        </p>
+        <p>
+          Prijevoznik: <span translate="no">{network.operator}</span><span class="src">Izvor podataka: <a href={city.sourceUrl}>Vozni red (PDF)</a></span>
+        </p>
+        <p class="narrow-only"><a href="/analiza">Analiza prijevoza</a></p>
+      </div>
+    </footer>
+    <script>
+      import { city } from '../../city.config';
+      import { zonedNow } from '../lib/time';
+
+      const el = document.querySelector<HTMLElement>('.expired');
+      if (el && zonedNow(city.timeZone).date > el.dataset.until!) el.hidden = false;
+    </script>
+  </body>
+</html>

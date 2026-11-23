@@ -1,0 +1,111 @@
+---
+// Vozni red cijele linije za ispis i spremanje u PDF: stanice u redovima, vožnje u stupcima, dan po stranici.
+import '@fontsource-variable/overpass';
+import { city } from '../../../../city.config';
+import calendar from '../../../generated/calendar.json';
+import { labels, longDate, network } from '../../../lib/network';
+import { hhmm } from '../../../lib/time';
+import type { Direction, Line, Trip } from '../../../lib/types';
+import jezik from '../../../scripts/jezik.js?raw';
+import '../../../styles/pdf.css';
+
+export function getStaticPaths() {
+  return network.lines.map((line) => ({ params: { line: line.slug }, props: { line } }));
+}
+const { line } = Astro.props as { line: Line };
+
+/** Koliko vožnji stane u širinu stranice; ostatak ide u blok ispod. */
+const COLUMNS = 18;
+/** S ovoliko vožnji ili manje po smjeru, smjerovi stoje jedan do drugog. */
+const NARROW = 6;
+const startOf = (t: Trip) => Math.min(...t.times.filter((m): m is number => m !== null));
+const letter = (i: number) => String.fromCharCode(97 + i);
+
+function table(dir: Direction, svc: number) {
+  const trips = dir.trips.filter((t) => t.svc === svc).sort((a, b) => startOf(a) - startOf(b));
+  const rows = dir.stops.map((s, i) => ({ name: s.name, i })).filter(({ i }) => trips.some((t) => t.times[i] !== null));
+  const variants = [...new Set(trips.filter((t) => t.headsign !== dir.label).map((t) => t.headsign))];
+  const blocks = [];
+  for (let k = 0; k < trips.length; k += COLUMNS) blocks.push(trips.slice(k, k + COLUMNS));
+  return { dir, rows, variants, blocks, count: trips.length };
+}
+const days = labels.map((label, svc) => ({ label, dirs: line.dirs.map((d) => table(d, svc)).filter((t) => t.blocks.length) })).map((d) => ({ ...d, narrow: d.dirs.length > 1 && d.dirs.every((t) => t.count <= NARROW) }));
+const running = days.filter((d) => d.dirs.length);
+const idle = days.filter((d) => !d.dirs.length).map((d) => d.label.toLowerCase());
+const valid = `Vrijedi od ${longDate(calendar.start)} do ${longDate(calendar.end)}`;
+const title = `Linija ${line.short} – vozni red`;
+---
+
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="robots" content="noindex" />
+    <script is:inline set:html={jezik}></script>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  </head>
+  <body style={`--c:${line.color};--t:${line.text}`}>
+    <div class="bar">
+      <a href={`/linija/${line.slug}`}>← Linija {line.short}</a>
+      <button type="button" data-print hidden>Spremi kao PDF</button>
+      <p data-print hidden>U prozoru za ispis pod Odredište odaberi spremanje u PDF.</p>
+    </div>
+    <main class="sheet">
+      <header class="head">
+        <div><h1>{title}</h1><p>{line.long}</p></div>
+        <span class="no notranslate">{line.short}</span>
+      </header>
+      {running.map(({ label, dirs, narrow }) => (
+        <section class:list={['day', { narrow }]}>
+          <div class="day-head"><div><h2>{label}</h2><p>{valid}</p></div><span class="no notranslate">{line.short}</span></div>
+          {dirs.map(({ dir, rows, variants, blocks }) => (
+            <div class="dir">
+              <h3>{rows[0]!.name} <span aria-hidden="true">→</span><span class="sr-only"> do </span> {rows.at(-1)!.name}</h3>
+              {blocks.map((trips) => (
+                <div class="scroll" role="region" tabindex="0" aria-label={`${label}, smjer ${dir.label}`}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col"><span class="sr-only">Stanica</span></th>
+                        {Array.from({ length: narrow ? NARROW : COLUMNS }, (_, k) => {
+                          const t = trips[k];
+                          const v = t ? variants.indexOf(t.headsign) : -1;
+                          return t ? <th scope="col">{v >= 0 ? letter(v) : <span class="sr-only">{hhmm(startOf(t))}</span>}</th> : <td></td>;
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map(({ name, i }, n) => (
+                        <tr class:list={[{ end: n === 0 || n === rows.length - 1 }]}>
+                          <th scope="row">{name}</th>
+                          {Array.from({ length: narrow ? NARROW : COLUMNS }, (_, k) => {
+                            const m = trips[k]?.times[i];
+                            return <td>{trips[k] && (m == null ? '·' : hhmm(m).replace(/^0/, ''))}</td>;
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+              {variants.map((v, i) => <p class="variant"><b>{letter(i)}</b> vozi za: {v}</p>)}
+            </div>
+          ))}
+        </section>
+      ))}
+      <footer>
+        {idle.length > 0 && <p>Ne vozi: {idle.join(', ')}.</p>}
+        <p>· vožnja tu ne staje</p>
+        <p>Prijevoznik: <span translate="no">{network.operator}</span>. {city.siteName}, neslužbena stranica.</p>
+      </footer>
+    </main>
+    <script>
+      for (const el of document.querySelectorAll<HTMLElement>('[data-print]')) {
+        el.hidden = false;
+        if (el instanceof HTMLButtonElement) el.addEventListener('click', () => print());
+      }
+    </script>
+  </body>
+</html>

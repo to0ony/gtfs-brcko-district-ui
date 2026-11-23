@@ -1,0 +1,14 @@
+---
+interface Props {
+  /** Zadnja stavka je trenutna stranica i nema poveznicu. */
+  items: { label: string; href?: string; keepDir?: boolean }[];
+}
+---
+
+<nav class="crumbs" aria-label="Putanja">
+  <ol>
+    {Astro.props.items.map(({ label, href, keepDir }) => (
+      <li>{href ? <a href={href} data-keep-dir={keepDir ? '' : undefined}>{label}</a> : <span aria-current="page">{label}</span>}</li>
+    ))}
+  </ol>
+</nav>

@@ -1,0 +1,57 @@
+---
+// Okvir za /analiza. Zasebna cjelina: ništa od ovoga se ne učitava na ostalim stranicama.
+import '@fontsource-variable/overpass';
+import './analiza.css';
+import { city } from '../../city.config';
+import jezik from '../scripts/jezik.js?raw';
+
+interface Props {
+  title: string;
+  description: string;
+  back: { href: string; label: string };
+  toc: [string, string][];
+}
+const { title, description, back, toc } = Astro.props;
+---
+
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} – {city.name}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex" />
+    <script is:inline>
+      // Tema se bira na ostatku stranice; ovdje se samo primijeni.
+      (() => {
+        const system = matchMedia('(prefers-color-scheme: dark)');
+        const apply = () => {
+          let v = null;
+          try { v = localStorage.getItem('tema'); } catch { /* bez pohrane vrijedi sustav */ }
+          document.documentElement.dataset.theme = v === 'light' || v === 'dark' ? v : system.matches ? 'dark' : 'light';
+        };
+        apply();
+        system.addEventListener('change', apply);
+        addEventListener('storage', apply);
+        addEventListener('pageshow', apply);
+      })();
+    </script>
+    <script is:inline set:html={jezik}></script>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip" href="#sadrzaj">Preskoči na sadržaj</a>
+    <header class="top">
+      <div class="wrap">
+        <a class="back" href={back.href}>← {back.label}</a>
+        <h1>{title}</h1>
+        <p>{description}</p>
+      </div>
+      <nav class="wrap toc" aria-label="Poglavlja">
+        {toc.map(([href, label]) => <a href={href}>{label}</a>)}
+      </nav>
+    </header>
+    <main id="sadrzaj"><slot /></main>
+  </body>
+</html>

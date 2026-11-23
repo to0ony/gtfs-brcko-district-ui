@@ -1,0 +1,6 @@
+---
+// Oznaka s tabli na brčanskim stanicama.
+interface Props { size: 'logo' | 'head' }
+---
+
+<span class:list={['bus-sign', Astro.props.size]} translate="no" aria-hidden="true"><span>BUS</span><span>БУС</span></span>
