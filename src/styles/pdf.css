@@ -1,4 +1,4 @@
-/* Listovi za ispis: /linija/*/pdf i /analiza/pdf. */
+/* Listovi za ispis: PDF linije i PDF prijedloga. */
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; background: #e4e7ea; color: #000; font: 400 13px/1.25 'Overpass Variable', system-ui, sans-serif; font-variant-numeric: tabular-nums lining-nums; }
 h1, h2, h3, p { margin: 0; }
