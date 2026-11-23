@@ -36,6 +36,7 @@
     preglednik: [null, 'pregledač'],
     'postavkama preglednika': [null, 'podešavanjima pregledača'],
     tko: ['ko', 'ko'],
+    'početni zaslon': ['početni ekran', 'početni ekran'],
     kotačić: ['točkić', 'točkić'],
   };
   /** Oznaka `sr` se izbjegava za ćirilicu: Overpass tada i u uspravnom tekstu crta rukopisna slova (т kao ш s crtom). */

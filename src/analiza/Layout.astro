@@ -3,6 +3,7 @@
 import '@fontsource-variable/overpass';
 import './analiza.css';
 import { city } from '../../city.config';
+import Pwa from '../components/Pwa.astro';
 import jezik from '../scripts/jezik.js?raw';
 
 interface Props {
@@ -18,7 +19,7 @@ const { title, description, back, toc } = Astro.props;
 <html lang="hr">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{title} – {city.name}</title>
     <meta name="description" content={description} />
     <meta name="robots" content="noindex" />
@@ -39,6 +40,7 @@ const { title, description, back, toc } = Astro.props;
     </script>
     <script is:inline set:html={jezik}></script>
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <Pwa />
   </head>
   <body>
     <a class="skip" href="#sadrzaj">Preskoči na sadržaj</a>

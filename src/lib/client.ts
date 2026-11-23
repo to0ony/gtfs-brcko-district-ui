@@ -86,6 +86,12 @@ export function useFavorites(kind: FavoriteKind): string[] {
   return favs;
 }
 
+/** Adrese spremljenih stanica i linija, da ih service worker spremi za rad bez veze. */
+export const savedPaths = (): string[] => [
+  ...readFavorites('stanica').flatMap((s) => { const slug = encodeURIComponent(s.split('#')[0]!); return [`/stanica/${slug}`, `/data/stanica/${slug}.json`]; }),
+  ...readFavorites('linija').map((s) => `/linija/${encodeURIComponent(s)}`),
+];
+
 /** Lokacija korisnika; greška nosi poruku za prikaz. */
 export function locate(): Promise<[number, number]> {
   return new Promise((resolve, reject) => {

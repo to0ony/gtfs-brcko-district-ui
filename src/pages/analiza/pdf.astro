@@ -2,6 +2,7 @@
 // Vozni red linije s prijedlogom za vikende i praznike, za ispis i spremanje u PDF: /analiza/pdf?linija=8
 import '@fontsource-variable/overpass';
 import LinePdf from '../../analiza/LinePdf';
+import Pwa from '../../components/Pwa.astro';
 import '../../styles/pdf.css';
 import jezik from '../../scripts/jezik.js?raw';
 ---
@@ -10,11 +11,12 @@ import jezik from '../../scripts/jezik.js?raw';
 <html lang="hr">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Prijedlog za vikende i praznike</title>
     <meta name="robots" content="noindex" />
     <script is:inline set:html={jezik}></script>
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <Pwa />
   </head>
   <body>
     <LinePdf client:only="preact"><p slot="fallback" class="bar">Učitavam…</p></LinePdf>

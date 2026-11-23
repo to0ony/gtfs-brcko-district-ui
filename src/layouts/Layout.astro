@@ -3,6 +3,8 @@ import '@fontsource-variable/overpass';
 import '../styles/global.css';
 import { city } from '../../city.config';
 import BusSign from '../components/BusSign.astro';
+import Icon from '../components/Icon.astro';
+import Pwa from '../components/Pwa.astro';
 import { longDate, network } from '../lib/network';
 import jezik from '../scripts/jezik.js?raw';
 import calendar from '../generated/calendar.json';
@@ -10,19 +12,21 @@ import calendar from '../generated/calendar.json';
 interface Props {
   title?: string;
   description?: string;
-  section?: 'linije' | 'stanice' | 'put' | 'karta';
+  section?: 'pocetna' | 'linije' | 'stanice' | 'put' | 'karta';
 }
 const {
   title,
   description = `Vozni red autobusa u Brčkom: linije, stanice i sljedeći polasci.`,
   section,
 } = Astro.props;
+// Početna i ikone vide se samo u donjoj traci instalirane aplikacije.
 const nav = [
-  { id: 'linije', href: '/linije', label: 'Linije' },
-  { id: 'stanice', href: '/stanice', label: 'Stanice' },
-  { id: 'put', href: '/put', label: 'Put' },
-  { id: 'karta', href: '/karta', label: 'Karta' },
-];
+  { id: 'pocetna', href: '/', label: 'Početna', icon: 'home' },
+  { id: 'linije', href: '/linije', label: 'Linije', icon: 'bus' },
+  { id: 'stanice', href: '/stanice', label: 'Stanice', icon: 'pin' },
+  { id: 'put', href: '/put', label: 'Put', icon: 'route' },
+  { id: 'karta', href: '/karta', label: 'Karta', icon: 'map' },
+] as const;
 const until = longDate(calendar.end);
 ---
 
@@ -30,7 +34,7 @@ const until = longDate(calendar.end);
 <html lang="hr">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{title ? `${title} – ${city.siteName}` : `${city.siteName} – vozni red autobusa`}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
@@ -79,6 +83,7 @@ const until = longDate(calendar.end);
     </script>
     <script is:inline set:html={jezik}></script>
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <Pwa />
   </head>
   <body>
     <a class="skip" href="#sadrzaj">Preskoči na sadržaj</a>
@@ -90,7 +95,7 @@ const until = longDate(calendar.end);
         </a>
         <div class="top-end">
           <nav aria-label="Glavna navigacija">
-            {nav.map((n) => <a href={n.href} aria-current={section === n.id ? 'page' : undefined}>{n.label}</a>)}
+            {nav.map((n) => <a href={n.href} class:list={[{ 'app-only': n.id === 'pocetna' }]} aria-current={section === n.id ? 'page' : undefined}><Icon name={n.icon} size={24} />{n.label}</a>)}
           </nav>
           <div class="lang" translate="no" hidden>
             <span aria-hidden="true"></span>
@@ -120,6 +125,7 @@ const until = longDate(calendar.end);
       </div>
       <slot name="hero" />
     </header>
+    <p class="offline" role="status" hidden>Nema veze. Prikazano je ono što je spremljeno.</p>
     <p class="expired" data-until={calendar.end} hidden>
       Ovaj vozni red vrijedio je do {until} Polasci su okvirni dok ne stigne novi.
     </p>
@@ -132,6 +138,8 @@ const until = longDate(calendar.end);
         <p>
           Prijevoznik: <span translate="no">{network.operator}</span><span class="src">Izvor podataka: <a href={city.sourceUrl}>Vozni red (PDF)</a></span>
         </p>
+        <p class="install" hidden><button type="button">Instaliraj aplikaciju</button></p>
+        <p class="install-ios" hidden>Za aplikaciju na iPhoneu: Podijeli, pa Dodaj na početni zaslon.</p>
         <p><a href="/analiza">Analiza prijevoza</a></p>
       </div>
     </footer>
@@ -141,6 +149,24 @@ const until = longDate(calendar.end);
 
       const el = document.querySelector<HTMLElement>('.expired');
       if (el && zonedNow(city.timeZone).date > el.dataset.until!) el.hidden = false;
+
+      const offline = document.querySelector<HTMLElement>('.offline')!;
+      const online = () => { offline.hidden = navigator.onLine; };
+      online();
+      addEventListener('online', online);
+      addEventListener('offline', online);
+
+      // Android i računalo nude instalaciju sami; iPhone samo preko izbornika Podijeli.
+      const install = document.querySelector<HTMLElement>('.install')!;
+      type InstallEvent = Event & { prompt: () => Promise<void> };
+      addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        install.hidden = false;
+        install.querySelector('button')!.onclick = () => { install.hidden = true; void (e as InstallEvent).prompt(); };
+      });
+      addEventListener('appinstalled', () => { install.hidden = true; });
+      const standalone = matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
+      if (!standalone && /iPhone|iPad|iPod/.test(navigator.userAgent)) document.querySelector<HTMLElement>('.install-ios')!.hidden = false;
     </script>
   </body>
 </html>

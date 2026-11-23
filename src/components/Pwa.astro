@@ -1,0 +1,25 @@
+---
+// Zaglavlje za instalaciju na telefon i rad bez veze. Ide u <head>.
+import { city } from '../../city.config';
+---
+
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content={city.siteName} />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="format-detection" content="telephone=no" />
+<script>
+  import { savedPaths } from '../lib/client';
+
+  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then(() => navigator.serviceWorker.ready).then((r) => {
+        const send = () => { const save = savedPaths(); if (save.length) r.active?.postMessage({ save }); };
+        send();
+        addEventListener('favoriti', send);
+      }).catch(() => { /* stranica radi i bez toga */ });
+    });
+  }
+</script>
